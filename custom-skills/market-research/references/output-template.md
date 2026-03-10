@@ -45,5 +45,9 @@
 - Mid-term:
 - Differentiation angle:
 
+## Citation rule
+- For each key claim, include `Source: Site name — URL`
+- Do not output uncited market, trend, or sizing claims unless clearly marked as inference
+
 ## Sources
-- Name — URL — note
+- Site name — URL — note

@@ -42,6 +42,9 @@ Produce a useful research brief, not a pile of links.
 - Note regional limits; a Japan market brief should not quietly rely on US-only evidence.
 - If market sizing is weak, give directional framing instead of fake precision.
 - Keep recommendations tied to evidence.
+- For every research-style output, include citations with both the site name and the source URL.
+- When summarizing findings, attach citations inline or immediately below the relevant bullet/section instead of only listing raw links at the end.
+- End with a `Sources` section that repeats each cited source as `Site name — URL`.
 
 ## Use the template
 

@@ -44,6 +44,9 @@ Map the competitive landscape in a way that supports action.
 - Note when data is missing instead of guessing.
 - Distinguish direct threats from adjacent noise.
 - Prefer a small accurate competitor set over a bloated list.
+- For every research-style output, include citations with both the site name and the source URL.
+- When making competitor claims, attach the citation inline or directly below the bullet/table row when practical.
+- End with a `Sources` section that repeats each cited source as `Site name — URL`.
 
 ## Use the template
 

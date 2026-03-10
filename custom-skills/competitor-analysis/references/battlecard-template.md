@@ -36,5 +36,9 @@
 - 30-60 day:
 - Research gaps:
 
+## Citation rule
+- For each important competitor claim, include `Source: Site name — URL`
+- Mark unsupported conclusions as hypotheses, not facts
+
 ## Sources
-- Name — URL — note
+- Site name — URL — note
