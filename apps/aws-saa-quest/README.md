@@ -1,41 +1,55 @@
 # AWS SAA Quest
 
-スマホ向けの **AWS SAA 学習ゲーム** たたき台です。
+AWS Certified Solutions Architect - Associate (SAA) 向けの、
+**学習ゲーム風スマホアプリ** のプロトタイプです。
 
-## いま入っているもの
+## 現在のフェーズ
 
-- Expo / React Native ベース
+- Phase 1: Expo / React Native ひな形作成 ✅
+- Phase 2: AWS学習クイズ MVP 実装 ✅
+- Phase 3: ゲームっぽさの核を追加 ✅
+
+## いま入っている要素
+
 - ダークテーマのホーム画面
-- デイリーミッション表示
-- AWS SAA 向けのミニクイズ 5問
-- 結果画面
-- 苦手分野を次の復習テーマとして出す MVP
+- デイリーミッション
+- AWS SAA ミニクイズ
+- EXP / レベル
+- 連勝コンボ
+- ハート制
+- ボス戦っぽい最終問題
+- 苦手分野を次の討伐対象として表示
+- 結果画面とバトルログ
 
-## 今後伸ばせる方向
+## 次の伸びしろ
 
-- 分野別ステージ（IAM村、VPC砂漠みたいなやつ）
-- 経験値 / レベルアップ
-- 連続学習 streak
-- 間違えた問題だけ再出題
-- 模試モード
-- ローカル保存 / クラウド同期
-- 問題データを JSON 分離
+- 問題数を 50〜100 問以上に増やす
+- 分野別ステージ
+- 保存機能（ローカルストレージ）
+- streak / ログイン報酬
+- 復習専用モード
+- 本物の模試モード
+- 図解つき解説
 
 ## 起動
 
 ```bash
 cd apps/aws-saa-quest
 npm install
-npm run web
-```
-
-iPhone シミュレータや Expo Go を使うなら:
-
-```bash
-cd apps/aws-saa-quest
 npm start
 ```
 
-## ソースの取り方
+Web で見る場合:
 
-この workspace を後で PC から引っこ抜くか、git / GitHub 経由で取得してください。
+```bash
+cd apps/aws-saa-quest
+npm run web
+```
+
+## 補足
+
+web 用依存 (`react-dom`, `react-native-web`) は導入済みです。
+
+## ソース取得
+
+この workspace から持ち出すか、あとで GitHub に push して clone してください。
