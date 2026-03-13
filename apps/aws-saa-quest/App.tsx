@@ -24,6 +24,23 @@ type Quiz = {
   reward: number;
 };
 
+type WrongAnswer = {
+  id: number;
+  topic: Topic;
+  question: string;
+  selectedChoice: string;
+  correctChoice: string;
+  explanation: string;
+};
+
+type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  unlocked: boolean;
+  icon: string;
+};
+
 const quizzes: Quiz[] = [
   {
     id: 1,
@@ -127,6 +144,50 @@ const dailyMissions = [
 const levelFromExp = (exp: number) => Math.floor(exp / 40) + 1;
 const expIntoLevel = (exp: number) => exp % 40;
 
+const buildAchievements = (
+  accuracy: number,
+  bestCombo: number,
+  wrongAnswers: WrongAnswer[],
+  runScore: number,
+  total: number,
+): Achievement[] => [
+  {
+    id: 'first-clear',
+    title: '初回踏破',
+    description: '1回クエストを完走した',
+    unlocked: true,
+    icon: '🏁',
+  },
+  {
+    id: 'combo-3',
+    title: '連撃アーキテクト',
+    description: '3連勝コンボを達成',
+    unlocked: bestCombo >= 3,
+    icon: '⚔️',
+  },
+  {
+    id: 'perfect-clear',
+    title: 'ノーミス設計士',
+    description: '全問正解でクリア',
+    unlocked: runScore === total,
+    icon: '👑',
+  },
+  {
+    id: 'boss-down',
+    title: '高可用性ドラゴンスレイヤー',
+    description: 'ボス戦に勝利した',
+    unlocked: accuracy >= 60,
+    icon: '🐉',
+  },
+  {
+    id: 'review-mind',
+    title: '復習の鬼',
+    description: '間違いを持ち帰って次の改善点を見つけた',
+    unlocked: wrongAnswers.length > 0,
+    icon: '🧠',
+  },
+];
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
   const [index, setIndex] = useState(0);
@@ -140,6 +201,7 @@ export default function App() {
   const [streak] = useState(4);
   const [finishedTopics, setFinishedTopics] = useState<Topic[]>([]);
   const [wrongTopics, setWrongTopics] = useState<Topic[]>([]);
+  const [wrongAnswers, setWrongAnswers] = useState<WrongAnswer[]>([]);
   const [battleLog, setBattleLog] = useState<string[]>(['Cloud Quest 起動。']);
 
   const mission = useMemo(() => {
@@ -162,8 +224,10 @@ export default function App() {
     setRunExp(0);
     setHearts(3);
     setCombo(0);
+    setBestCombo(0);
     setFinishedTopics([]);
     setWrongTopics([]);
+    setWrongAnswers([]);
     setBattleLog(['Quest 開始。今日はクラウド迷宮を攻略する。']);
   };
 
@@ -171,26 +235,37 @@ export default function App() {
     if (selected === null) return;
 
     const isCorrect = selected === currentQuiz.answer;
+    const rewardIfCorrect = currentQuiz.reward + combo * 2;
 
     setFinishedTopics((prev) =>
       prev.includes(currentQuiz.topic) ? prev : [...prev, currentQuiz.topic],
     );
 
     if (isCorrect) {
-      const gained = currentQuiz.reward + combo * 2;
       const nextCombo = combo + 1;
       setRunScore((prev) => prev + 1);
-      setRunExp((prev) => prev + gained);
+      setRunExp((prev) => prev + rewardIfCorrect);
       setCombo(nextCombo);
       setBestCombo((prev) => Math.max(prev, nextCombo));
       setBattleLog((prev) => [
-        `${currentQuiz.topic} を突破。+${gained} EXP、${nextCombo} 連勝。`,
+        `${currentQuiz.topic} を突破。+${rewardIfCorrect} EXP、${nextCombo} 連勝。`,
         ...prev,
       ]);
     } else {
       setHearts((prev) => Math.max(0, prev - 1));
       setCombo(0);
       setWrongTopics((prev) => [...prev, currentQuiz.topic]);
+      setWrongAnswers((prev) => [
+        ...prev,
+        {
+          id: currentQuiz.id,
+          topic: currentQuiz.topic,
+          question: currentQuiz.question,
+          selectedChoice: currentQuiz.choices[selected],
+          correctChoice: currentQuiz.choices[currentQuiz.answer],
+          explanation: currentQuiz.explanation,
+        },
+      ]);
       setBattleLog((prev) => [
         `${currentQuiz.topic} で被弾。復習対象に追加。`,
         ...prev,
@@ -198,7 +273,7 @@ export default function App() {
     }
 
     if (index === total - 1) {
-      setExp((prev) => prev + runExp + (isCorrect ? currentQuiz.reward + combo * 2 : 0));
+      setExp((prev) => prev + runExp + (isCorrect ? rewardIfCorrect : 0));
       setScreen('review');
       return;
     }
@@ -211,6 +286,8 @@ export default function App() {
   const focusTopic = wrongTopics[0] ?? 'VPC';
   const focusEnemy = topics.find((item) => item.topic === focusTopic)?.enemy ?? 'Cloud Beast';
   const rank = accuracy >= 90 ? 'S' : accuracy >= 75 ? 'A' : accuracy >= 60 ? 'B' : 'C';
+  const achievements = buildAchievements(accuracy, bestCombo, wrongAnswers, runScore, total);
+  const unlockedCount = achievements.filter((item) => item.unlocked).length;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -267,12 +344,19 @@ export default function App() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>今回入れた面白さの核</Text>
-              <Text style={styles.bullet}>• EXP / レベル</Text>
-              <Text style={styles.bullet}>• 連勝コンボ</Text>
-              <Text style={styles.bullet}>• 3ハート制</Text>
-              <Text style={styles.bullet}>• 最後にボス戦</Text>
-              <Text style={styles.bullet}>• 苦手分野 = 次の討伐対象</Text>
+              <Text style={styles.sectionTitle}>アチーブメント棚</Text>
+              {achievements.map((item) => (
+                <View key={item.id} style={[styles.achievementRow, !item.unlocked && styles.achievementLocked]}>
+                  <Text style={styles.achievementIcon}>{item.icon}</Text>
+                  <View style={styles.topicTextWrap}>
+                    <Text style={styles.topicTitle}>{item.title}</Text>
+                    <Text style={styles.topicSubtitle}>{item.description}</Text>
+                  </View>
+                  <Text style={item.unlocked ? styles.unlockText : styles.lockText}>
+                    {item.unlocked ? 'UNLOCK' : 'LOCKED'}
+                  </Text>
+                </View>
+              ))}
             </View>
 
             <Pressable style={styles.primaryButton} onPress={startQuest}>
@@ -351,7 +435,7 @@ export default function App() {
               <Text style={styles.resultExp}>+{runExp} EXP</Text>
             </View>
             <Text style={styles.subtitle}>
-              {runScore} / {total} 正解。コンボ最高 {bestCombo}。面白さの中心はだいぶ出てきた。
+              {runScore} / {total} 正解。コンボ最高 {bestCombo}。復習しやすさと達成感を足した。
             </Text>
 
             <View style={styles.heroCard}>
@@ -360,6 +444,39 @@ export default function App() {
               <Text style={styles.heroHint}>
                 苦手を「次の敵」に見立てると、復習がただの反省会じゃなくなる。
               </Text>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>アンロックしたアチーブメント ({unlockedCount}/{achievements.length})</Text>
+              {achievements.map((item) => (
+                <View key={item.id} style={[styles.achievementRow, !item.unlocked && styles.achievementLocked]}>
+                  <Text style={styles.achievementIcon}>{item.icon}</Text>
+                  <View style={styles.topicTextWrap}>
+                    <Text style={styles.topicTitle}>{item.title}</Text>
+                    <Text style={styles.topicSubtitle}>{item.description}</Text>
+                  </View>
+                  <Text style={item.unlocked ? styles.unlockText : styles.lockText}>
+                    {item.unlocked ? 'UNLOCK' : 'LOCKED'}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>間違えた問題の復習帳</Text>
+              {wrongAnswers.length === 0 ? (
+                <Text style={styles.bullet}>• 今回はノーミス。復習帳は空。</Text>
+              ) : (
+                wrongAnswers.map((item) => (
+                  <View key={item.id} style={styles.reviewCard}>
+                    <Text style={styles.reviewTopic}>{item.topic}</Text>
+                    <Text style={styles.reviewQuestion}>{item.question}</Text>
+                    <Text style={styles.reviewLine}>あなたの回答: {item.selectedChoice}</Text>
+                    <Text style={styles.reviewLine}>正解: {item.correctChoice}</Text>
+                    <Text style={styles.reviewExplanation}>{item.explanation}</Text>
+                  </View>
+                ))
+              )}
             </View>
 
             <View style={styles.section}>
@@ -457,6 +574,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
   },
   progressPercent: {
     color: '#7dd3fc',
@@ -530,6 +648,32 @@ const styles = StyleSheet.create({
   topicSubtitle: {
     color: '#94a3b8',
     fontSize: 13,
+  },
+  achievementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#111833',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#1e2a52',
+  },
+  achievementLocked: {
+    opacity: 0.55,
+  },
+  achievementIcon: {
+    fontSize: 24,
+  },
+  unlockText: {
+    color: '#86efac',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  lockText: {
+    color: '#94a3b8',
+    fontWeight: '800',
+    fontSize: 12,
   },
   bullet: {
     color: '#cbd5e1',
@@ -662,6 +806,36 @@ const styles = StyleSheet.create({
     color: '#86efac',
     fontSize: 20,
     fontWeight: '800',
+  },
+  reviewCard: {
+    backgroundColor: '#111833',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#1e2a52',
+    gap: 6,
+  },
+  reviewTopic: {
+    color: '#7dd3fc',
+    fontWeight: '800',
+    fontSize: 12,
+    textTransform: 'uppercase',
+  },
+  reviewQuestion: {
+    color: '#f8fafc',
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  reviewLine: {
+    color: '#cbd5e1',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  reviewExplanation: {
+    color: '#94a3b8',
+    fontSize: 13,
+    lineHeight: 19,
   },
   buttonDisabled: {
     opacity: 0.45,
