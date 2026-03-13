@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+bash scripts/security-review.sh
+
+echo "[pre-push] running production checks"
+cd web-estimate-app
+npm run lint
+npm run build
+npm audit --omit=dev --audit-level=high

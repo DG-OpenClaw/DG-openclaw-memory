@@ -1,0 +1,52 @@
+name: security-review
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feature/**'
+      - 'fix/**'
+      - 'chore/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Secret and risky pattern scan
+        run: bash scripts/security-review.sh
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-estimate-app/package-lock.json
+
+      - name: Install app dependencies
+        working-directory: web-estimate-app
+        run: npm ci
+
+      - name: Lint
+        working-directory: web-estimate-app
+        run: npm run lint
+
+      - name: Production build
+        working-directory: web-estimate-app
+        run: npm run build
+
+      - name: Dependency audit
+        working-directory: web-estimate-app
+        run: npm audit --omit=dev --audit-level=high
