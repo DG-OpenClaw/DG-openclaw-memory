@@ -6,8 +6,8 @@ cd "$ROOT_DIR"
 
 echo "[security-review] scanning tracked files for obvious secret leaks and risky patterns"
 
-tracked_files="$(git ls-files)"
-if [[ -z "$tracked_files" ]]; then
+tracked_files_count="$(git ls-files | wc -l | tr -d ' ')"
+if [[ "$tracked_files_count" == "0" ]]; then
   echo "No tracked files found."
   exit 0
 fi
@@ -38,7 +38,7 @@ ignore_globs=(
 
 status=0
 for pattern in "${patterns[@]}"; do
-  if git grep -nEI "$pattern" -- $tracked_files "${ignore_globs[@]}"; then
+  if git grep -nEI -e "$pattern" -- . "${ignore_globs[@]}"; then
     echo
     echo "[security-review] blocked by pattern: $pattern"
     status=1
